@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Point IA Archery — Clima</title>
+  <link rel="stylesheet" href="clima/clima.css">
+  <style>
+    body { margin: 0; font-family: system-ui, Arial, sans-serif; background: #f2f5f9; padding: 24px 16px; color: #1d2733; }
+    .demo { max-width: 420px; margin: 0 auto; text-align: center; }
+    .demo button { padding: 14px 20px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700;
+      color: #fff; background: #e53935; cursor: pointer; width: 100%; }
+    pre { text-align: left; background: #fff; border-radius: 12px; padding: 12px; font-size: 12px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <div class="demo">
+    <h3>Demonstração — registro de clima</h3>
+    <button id="fim">Encerrar treino</button>
+    <pre id="saida">Os dados salvos aparecem aqui.</pre>
+  </div>
+
+  <script src="clima/clima.js"></script>
+  <script>
+    document.getElementById('fim').onclick = () => {
+      // No seu app: só abre se o usuário deixou "perguntar" ligado
+      // if (!ClimaModal.deveperguntar()) return encerrarSessao();
+      ClimaModal.open({
+        logo: 'logo.png',
+        onSave: (dados) => {
+          document.getElementById('saida').textContent = JSON.stringify(dados, null, 2);
+          // Ex.: sessao.clima = dados; salvarSessao(sessao);
+        },
+        onSkip: () => {
+          document.getElementById('saida').textContent = 'Registro de clima pulado.';
+        }
+      });
+    };
+  </script>
+</body>
+</html>
