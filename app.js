@@ -164,16 +164,11 @@
   function render() {
     var info = buildDistances(state.bow, state.cls, state.sex);
     var marks = marksFor(info);
+    var saved = Object.keys(marks).map(Number).sort(function (x, y) { return x - y; });
 
     var visible = [];
     info.groups.forEach(function (g) { g.items.forEach(function (it) { visible.push(it.d); }); });
-    if (visible.indexOf(state.selected) < 0) { state.selected = info.main; draft = null; }
-
-    // escala da régua
-    var vals = visible.map(function (d) { return estimate(marks, d); }).filter(function (v) { return v !== null; });
-    var min = vals.length ? Math.min.apply(null, vals) : 0;
-    var max = vals.length ? Math.max.apply(null, vals) : 1;
-    var span = (max - min) || 1;
+    if (visible.indexOf(state.selected) < 0 && saved.indexOf(state.selected) < 0) { state.selected = info.main; draft = null; }
 
     // filtros
     document.querySelectorAll('#bow-group button').forEach(function (b) {
@@ -194,64 +189,83 @@
     $('notice').textContent = info.notice;
     $('profile').textContent = profileName(info);
 
-    // lista
-    var measuredCount = 0, total = 0;
-    listEl.innerHTML = '';
+    // escolha da distância (distâncias oficiais da categoria)
+    var pick = $('dist-pick');
+    pick.innerHTML = '';
     info.groups.forEach(function (g) {
-      var head = document.createElement('div');
-      head.className = 'group-head';
-      head.innerHTML = '<strong></strong><span></span>';
-      head.querySelector('strong').textContent = g.title;
-      head.querySelector('span').textContent = g.sub;
-      listEl.appendChild(head);
-
+      var wrap = document.createElement('div');
+      wrap.className = 'pick-group';
+      var lab = document.createElement('span');
+      lab.className = 'pick-label';
+      lab.textContent = g.title;
+      wrap.appendChild(lab);
+      var chips = document.createElement('div');
+      chips.className = 'chips';
       g.items.forEach(function (it) {
-        total++;
-        var measured = marks[it.d] !== undefined;
-        if (measured) measuredCount++;
-        var v = estimate(marks, it.d);
-        var cls = measured ? 'measured' : 'est';
-
-        var row = document.createElement('button');
-        row.type = 'button';
-        row.className = 'row';
-        row.setAttribute('aria-pressed', String(it.d === state.selected));
-        row.innerHTML =
-          '<span class="row-dist"><b></b><small></small></span>' +
-          '<span class="rail" aria-hidden="true"></span>' +
-          '<span class="row-val"></span>';
-        row.querySelector('b').textContent = it.d + ' m';
-        var small = row.querySelector('small');
-        small.textContent = it.label;
-        if (it.main) small.className = 'main';
-        if (v !== null) {
-          var dot = document.createElement('i');
-          dot.className = cls;
-          dot.style.left = (4 + ((v - min) / span) * 92).toFixed(1) + '%';
-          row.querySelector('.rail').appendChild(dot);
-        }
-        var valEl = row.querySelector('.row-val');
-        valEl.className = 'row-val ' + cls;
-        valEl.textContent = v === null ? '—' : (measured ? '' : '~') + fmt(v);
-        row.setAttribute('aria-label', it.d + ' metros, ' + (v === null ? 'sem marcação' : fmt(v) + (measured ? ', medida' : ', estimada')));
-        row.addEventListener('click', function () { state.selected = it.d; draft = null; persist(); render(); });
-        listEl.appendChild(row);
+        var c = document.createElement('button');
+        c.type = 'button';
+        c.className = 'chip' + (marks[it.d] !== undefined ? ' has-mark' : '');
+        c.setAttribute('aria-pressed', String(it.d === state.selected));
+        c.textContent = it.d + ' m';
+        if (it.main) c.title = it.label;
+        c.setAttribute('aria-label', it.d + ' metros' + (marks[it.d] !== undefined ? ', já tem marcação' : ''));
+        c.addEventListener('click', function () { state.selected = it.d; draft = null; persist(); render(); });
+        chips.appendChild(c);
       });
+      wrap.appendChild(chips);
+      pick.appendChild(wrap);
     });
-    $('count-measured').textContent = measuredCount;
-    $('count-est').textContent = total - measuredCount;
+
+    // lista: somente as marcações salvas
+    listEl.innerHTML = '';
+    $('saved-count').textContent = saved.length === 1 ? '1 distância' : saved.length + ' distâncias';
+    if (saved.length === 0) {
+      var empty = document.createElement('p');
+      empty.className = 'empty';
+      empty.textContent = 'Nenhuma marcação salva para este arco e flecha. Escolha a distância acima, ajuste o valor e toque em "Salvar marcação".';
+      listEl.appendChild(empty);
+    }
+    var vals = saved.map(function (d) { return marks[d]; });
+    var min = vals.length ? Math.min.apply(null, vals) : 0;
+    var max = vals.length ? Math.max.apply(null, vals) : 1;
+    var span = (max - min) || 1;
+    saved.forEach(function (d) {
+      var v = marks[d];
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'row';
+      row.setAttribute('aria-pressed', String(d === state.selected));
+      row.innerHTML =
+        '<span class="row-dist"><b></b><small></small></span>' +
+        '<span class="rail" aria-hidden="true"><i class="measured"></i></span>' +
+        '<span class="row-val measured"></span>';
+      row.querySelector('b').textContent = d + ' m';
+      row.querySelector('small').textContent = d <= 25 ? 'Indoor' : 'Outdoor';
+      row.querySelector('.rail i').style.left = (saved.length > 1 ? 4 + ((v - min) / span) * 92 : 50).toFixed(1) + '%';
+      row.querySelector('.row-val').textContent = fmt(v);
+      row.setAttribute('aria-label', d + ' metros, marcação ' + fmt(v) + '. Toque para editar');
+      row.addEventListener('click', function () {
+        state.selected = d; draft = null; persist(); render();
+        $('dist-pick').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      listEl.appendChild(row);
+    });
 
     // editor
     var selMeasured = marks[state.selected] !== undefined;
-    var selGroup = info.groups.filter(function (g) { return g.items.some(function (it) { return it.d === state.selected; }); })[0];
-    $('sel-context').textContent = selGroup ? selGroup.title + ' · ' + state.selected + ' m' : '';
+    var est = selMeasured ? null : estimate(marks, state.selected);
+    $('editor-title').textContent = selMeasured ? 'Editar marcação' : 'Nova marcação';
     $('sel-label').textContent = state.selected + ' metros';
     var badge = $('sel-badge');
-    badge.textContent = selMeasured ? 'Medida' : (estimate(marks, state.selected) === null ? 'Sem marca' : 'Estimada');
+    badge.textContent = selMeasured ? 'Salva' : 'Nova';
     badge.className = 'badge ' + (selMeasured ? 'measured' : 'est');
-    var current = currentValue(marks);
-    if (document.activeElement !== input) input.value = current === null ? '' : fmt(current);
+    var shown = draft !== null ? draft : (selMeasured ? marks[state.selected] : null);
+    if (document.activeElement !== input) input.value = shown === null ? '' : fmt(shown);
     input.step = String(state.step);
+    var sug = $('suggestion');
+    sug.hidden = est === null || draft !== null;
+    sug.textContent = est === null ? '' : 'Usar sugestão ~' + fmt(est);
+    sug.onclick = function () { draft = round2(est); input.value = fmt(draft); render(); };
     $('btn-remove').hidden = !selMeasured;
   }
 
@@ -269,9 +283,16 @@
     return state.marks[key];
   }
   function currentMarks() { return marksFor(currentInfo()); }
+  // valor de partida para os botões −/+ (rascunho, marca salva ou sugestão)
   function currentValue(marks) {
     if (draft !== null) return draft;
     return estimate(marks || currentMarks(), state.selected);
+  }
+  // valor que será salvo: só o que o usuário digitou/ajustou ou a marca já existente
+  function valueToSave() {
+    if (draft !== null) return draft;
+    var m = currentMarks();
+    return m[state.selected] !== undefined ? m[state.selected] : null;
   }
 
   function nudge(dir) {
@@ -303,7 +324,7 @@
   });
   input.addEventListener('keydown', function (e) { if (e.key === 'Enter') $('btn-save').click(); });
   $('btn-save').addEventListener('click', function () {
-    var v = currentValue();
+    var v = valueToSave();
     if (v === null) { input.focus(); return; }
     currentMarks()[state.selected] = round2(v);
     draft = null;
