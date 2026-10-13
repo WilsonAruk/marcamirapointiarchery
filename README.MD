@@ -1,52 +1,38 @@
-Point IA Archery — Registro de Clima
-Modal para registrar as condições do tempo ao fim de cada treino. Está em português, usa °C e km/h e traz o logo do app no topo.
-Arquivos
-```
-logo.png          ← coloque aqui o logo do Point IA Archery
-index.html        ← página de demonstração
-clima/clima.css   ← estilos (cores do logo)
-clima/clima.js    ← lógica do modal
-```
-Como usar no app
-Copie a pasta `clima/` e o `logo.png` para o repositório.
-Inclua os dois arquivos na página da sessão de treino:
-```html
-<link rel="stylesheet" href="clima/clima.css">
-<script src="clima/clima.js"></script>
-```
-Ao encerrar o treino, abra o modal:
-```js
-if (ClimaModal.deveperguntar()) {
-  ClimaModal.open({
-    logo: 'logo.png',
-    onSave: (clima) => { sessao.clima = clima; salvarSessao(sessao); },
-    onSkip: () => salvarSessao(sessao)
-  });
-} else {
-  salvarSessao(sessao);
-}
-```
-O que é registrado
-Céu: ensolarado, poucas nuvens, nublado, garoa, chuva ou tempestade.
-Temperatura (°C) e umidade (%).
-Vento: 7 níveis, de calmo (0–5 km/h) a muito forte (50+ km/h).
-Direção do vento em relação ao alvo: frente, trás, esquerda, direita e diagonais.
-Segunda leitura de vento: opcional.
-Observações: campo livre.
-Botão "Preencher com o clima atual": usa a API gratuita Open-Meteo (sem chave) e a localização do celular. Se o app estiver publicado, ele precisa rodar em HTTPS para a localização funcionar. O GitHub Pages já usa HTTPS.
-Exemplo de dados salvos
+PointIArchery · Marcações de Mira
+Módulo de marcações de mira por distância. É feito em HTML, CSS e JavaScript puro, sem dependências e sem build.
+Como publicar no GitHub Pages
+Crie um repositório no GitHub, por exemplo `pointiarchery-mira`.
+Envie todos os arquivos desta pasta para a raiz do repositório: `index.html`, `styles.css`, `app.js` e a pasta `assets/`.
+No repositório, abra Settings › Pages.
+Em Source, escolha Deploy from a branch. Depois selecione a branch `main` e a pasta `/ (root)` e clique em Save.
+Depois de 1 a 2 minutos, o site fica disponível em `https://SEU-USUARIO.github.io/pointiarchery-mira/`.
+Para testar no computador, basta abrir o `index.html` no navegador.
+Funcionalidades
+Arco: Recurvo, Composto ou Barebow. Cada arco tem suas próprias marcações.
+Categoria:
+Convencional: Adulto, Sub-21, Sub-18 e Master 50+.
+PCD: Para Aberto, W1, VI 1 e VI 2/3.
+Sexo: Masculino ou Feminino, que muda as distâncias do round 1440.
+Marcações medidas e estimadas: as estimadas são calculadas por interpolação linear entre as distâncias medidas.
+Ajuste: botões −/+ com passo de 0,05, 0,1 ou 0,25, além de digitação direta do valor.
+Salvamento automático no navegador (localStorage).
+Impressão da tabela, pelo ícone de impressora.
+Distâncias (World Archery)
+Categoria	Indoor	Outdoor
+Recurvo Adulto/Sub-21 M	18, 25 m	90, 70, 50, 30 m (principal: 70 m)
+Recurvo Adulto/Sub-21 F	18, 25 m	70, 60, 50, 30 m (principal: 70 m)
+Recurvo Sub-18 / Master M	18, 25 m	70, 60, 50, 30 m (principal: 60 m)
+Recurvo Sub-18 / Master F	18, 25 m	60, 50, 40, 30 m (principal: 60 m)
+Composto (todas)	18, 25 m	1440 da categoria + 50 m (principal)
+Barebow	18, 25 m	50 m
+Para Aberto Recurvo	18 m	70 m
+Para Aberto Composto	18 m	50 m
+Para W1	18 m	50 m (alvo de 80 cm)
+Para VI 1 e VI 2/3	18 m	30 m (alvo de 80 cm)
+As distâncias ficam na função `buildDistances()` do arquivo `app.js`. Se precisar ajustar alguma regra, a mudança é feita só ali.
+Integração com o sistema
+Hoje os dados ficam no `localStorage`, na chave `pointiarchery.sightmarks.v1`. Para salvar no banco do PointIArchery, troque as funções `load()` e `persist()` do `app.js` por chamadas à sua API.
+O formato dos dados é este:
 ```json
-{
-  "data": "2026-10-13T19:05:00.000Z",
-  "ceu": "poucas_nuvens",
-  "temperatura": 24,
-  "umidade": 62,
-  "vento": [
-    { "nivel": 3, "nivelNome": "Moderado", "faixaKmh": "20–28 km/h", "direcao": "D", "direcaoNome": "Da direita" }
-  ],
-  "ventoApi": { "kmh": 22.3, "rajada": 35.6, "graus": 110, "cardeal": "L" },
-  "observacoes": "",
-  "origem": "automatico",
-  "local": { "lat": -23.55, "lon": -46.63 }
-}
+{ "marks": { "R": { "18": 2.1, "70": 7.2 }, "C": {}, "B": {}, "W1": {}, "VI": {} } }
 ```
