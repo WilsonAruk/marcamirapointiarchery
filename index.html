@@ -64,27 +64,23 @@
       </div>
 
       <p class="notice" id="notice" hidden></p>
-
-      <div class="legend">
-        <span><i class="dot dot-measured"></i><b id="count-measured">0</b> medidas</span>
-        <span><i class="dot dot-est"></i><b id="count-est">0</b> estimadas</span>
-        <span class="legend-src">Distâncias World Archery</span>
-      </div>
     </header>
 
-    <section class="list" id="list" aria-label="Distâncias"></section>
-
-    <section class="editor" aria-label="Editar marcação">
+    <section class="editor" aria-label="Incluir ou editar marcação">
       <div class="editor-head">
-        <span id="sel-context"></span>
+        <strong id="editor-title">Nova marcação</strong>
         <span class="badge" id="sel-badge"></span>
       </div>
+
+      <div class="dist-pick" id="dist-pick" role="group" aria-label="Escolha a distância"></div>
+
       <div class="editor-main">
         <button type="button" class="round-btn" id="btn-minus" aria-label="Diminuir marcação">−</button>
         <div class="editor-value">
           <span id="sel-label"></span>
           <label class="sr-only" for="val-input">Valor da marcação</label>
-          <input id="val-input" type="number" inputmode="decimal" step="0.05">
+          <input id="val-input" type="number" inputmode="decimal" step="0.05" placeholder="0.00">
+          <button type="button" id="suggestion" hidden></button>
         </div>
         <button type="button" class="round-btn" id="btn-plus" aria-label="Aumentar marcação">+</button>
       </div>
@@ -98,9 +94,16 @@
       </div>
       <div class="editor-actions">
         <button type="button" class="btn-ghost" id="btn-remove">Remover</button>
-        <button type="button" class="btn-primary" id="btn-save">Salvar como medida</button>
+        <button type="button" class="btn-primary" id="btn-save">Salvar marcação</button>
       </div>
-      <p class="hint">Estimadas são calculadas a partir das distâncias medidas do mesmo arco e tipo de flecha.</p>
+    </section>
+
+    <section class="saved" aria-labelledby="saved-title">
+      <div class="saved-head">
+        <h2 id="saved-title">Minhas marcações</h2>
+        <span id="saved-count"></span>
+      </div>
+      <div class="list" id="list"></div>
     </section>
   </main>
 
