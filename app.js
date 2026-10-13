@@ -104,8 +104,9 @@
 
   // ---------- Estado ----------
   var defaults = {
-    bow: 'R', cls: 'adulto', sex: 'M', step: 0.05, selected: null,
-    marks: { R: {}, C: {}, B: {}, W1: {}, VI: {} }
+    bow: 'R', cls: 'adulto', sex: 'M', arrow: 'fina', step: 0.05, selected: null,
+    // chave = perfil do arco + tipo de flecha, ex.: "R|fina", "C|grossa"
+    marks: {}
   };
   var state = load();
   var draft = null; // valor em edição ainda não salvo
@@ -117,7 +118,15 @@
       var s = JSON.parse(raw);
       var out = clone(defaults);
       Object.keys(s).forEach(function (k) { out[k] = s[k]; });
-      Object.keys(defaults.marks).forEach(function (k) { if (!out.marks[k]) out.marks[k] = {}; });
+      if (!out.marks || typeof out.marks !== 'object') out.marks = {};
+      // migra dados antigos (sem tipo de flecha) para "fina"
+      Object.keys(out.marks).forEach(function (k) {
+        if (k.indexOf('|') < 0) {
+          if (!out.marks[k + '|fina']) out.marks[k + '|fina'] = out.marks[k];
+          delete out.marks[k];
+        }
+      });
+      if (out.arrow !== 'fina' && out.arrow !== 'grossa') out.arrow = 'fina';
       return out;
     } catch (e) {
       return clone(defaults);
@@ -135,7 +144,8 @@
     if (marks[d] !== undefined) return marks[d];
     var keys = Object.keys(marks).map(Number).sort(function (a, b) { return a - b; });
     if (keys.length === 0) return null;
-    if (keys.length === 1) return marks[keys[0]];
+    // Com menos de 2 distâncias medidas não há como estimar: as outras ficam sem marca.
+    if (keys.length < 2) return null;
     var lo = null, hi = null;
     for (var i = 0; i < keys.length; i++) {
       if (keys[i] < d) lo = keys[i];
@@ -153,7 +163,7 @@
 
   function render() {
     var info = buildDistances(state.bow, state.cls, state.sex);
-    var marks = state.marks[info.profileKey];
+    var marks = marksFor(info);
 
     var visible = [];
     info.groups.forEach(function (g) { g.items.forEach(function (it) { visible.push(it.d); }); });
@@ -175,6 +185,9 @@
     });
     document.querySelectorAll('#step-group button').forEach(function (b) {
       b.setAttribute('aria-pressed', String(parseFloat(b.dataset.step) === state.step));
+    });
+    document.querySelectorAll('#arrow-group button').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.arrow === state.arrow));
     });
     $('cls').value = state.cls;
     $('notice').hidden = !info.notice;
@@ -244,12 +257,18 @@
 
   function profileName(info) {
     var sex = state.sex === 'F' ? 'Feminino' : 'Masculino';
-    if (info.bowLocked) return CLASS_NAMES[state.cls] + ' · ' + sex;
-    return BOW_NAMES[state.bow] + ' · ' + CLASS_NAMES[state.cls] + ' · ' + sex;
+    var arrow = state.arrow === 'grossa' ? 'Flecha grossa' : 'Flecha fina';
+    if (info.bowLocked) return CLASS_NAMES[state.cls] + ' · ' + sex + ' · ' + arrow;
+    return BOW_NAMES[state.bow] + ' · ' + CLASS_NAMES[state.cls] + ' · ' + sex + ' · ' + arrow;
   }
 
   function currentInfo() { return buildDistances(state.bow, state.cls, state.sex); }
-  function currentMarks() { return state.marks[currentInfo().profileKey]; }
+  function marksFor(info) {
+    var key = info.profileKey + '|' + state.arrow;
+    if (!state.marks[key]) state.marks[key] = {};
+    return state.marks[key];
+  }
+  function currentMarks() { return marksFor(currentInfo()); }
   function currentValue(marks) {
     if (draft !== null) return draft;
     return estimate(marks || currentMarks(), state.selected);
@@ -271,6 +290,9 @@
   });
   document.querySelectorAll('#step-group button').forEach(function (b) {
     b.addEventListener('click', function () { state.step = parseFloat(b.dataset.step); persist(); render(); });
+  });
+  document.querySelectorAll('#arrow-group button').forEach(function (b) {
+    b.addEventListener('click', function () { state.arrow = b.dataset.arrow; draft = null; persist(); render(); });
   });
   $('cls').addEventListener('change', function (e) { state.cls = e.target.value; draft = null; persist(); render(); });
   $('btn-minus').addEventListener('click', function () { nudge(-1); });
