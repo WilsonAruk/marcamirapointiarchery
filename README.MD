@@ -12,6 +12,7 @@ Arco: Recurvo, Composto ou Barebow. Cada arco tem suas próprias marcações.
 Categoria:
 Convencional: Adulto, Sub-21, Sub-18 e Master 50+.
 PCD: Para Aberto, W1, VI 1 e VI 2/3.
+Flecha: tubo fino ou grosso. Cada combinação de arco e flecha tem suas próprias marcações.
 Sexo: Masculino ou Feminino, que muda as distâncias do round 1440.
 Marcações medidas e estimadas: as estimadas são calculadas por interpolação linear entre as distâncias medidas.
 Ajuste: botões −/+ com passo de 0,05, 0,1 ou 0,25, além de digitação direta do valor.
@@ -34,5 +35,5 @@ Integração com o sistema
 Hoje os dados ficam no `localStorage`, na chave `pointiarchery.sightmarks.v1`. Para salvar no banco do PointIArchery, troque as funções `load()` e `persist()` do `app.js` por chamadas à sua API.
 O formato dos dados é este:
 ```json
-{ "marks": { "R": { "18": 2.1, "70": 7.2 }, "C": {}, "B": {}, "W1": {}, "VI": {} } }
+{ "arrow": "fina", "marks": { "R|fina": { "18": 2.1, "70": 7.2 }, "R|grossa": { "18": 2.4 }, "C|fina": {} } }
 ```
