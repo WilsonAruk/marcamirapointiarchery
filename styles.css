@@ -106,6 +106,7 @@ h1 { margin: 0; font-size: 24px; font-weight: 700; color: var(--navy); letter-sp
   display: flex; justify-content: space-between; align-items: baseline;
   padding: 12px 8px 4px; gap: 8px;
 }
+.group-head.current strong { color: var(--blue); }
 .group-head strong { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); }
 .group-head span { font-size: 12px; color: #5A6A7E; text-align: right; }
 
@@ -138,7 +139,7 @@ h1 { margin: 0; font-size: 24px; font-weight: 700; color: var(--navy); letter-sp
 
 /* Editor */
 .editor {
-  margin: 12px 12px 0;
+  margin: 4px 12px 24px;
   background: var(--navy); color: var(--white);
   padding: 16px 16px 18px;
   border-radius: 20px;
@@ -170,7 +171,7 @@ h1 { margin: 0; font-size: 24px; font-weight: 700; color: var(--navy); letter-sp
   border: 1px dashed #F7C08A; background: transparent; color: #F7C08A; font-size: 13px; font-weight: 600;
 }
 
-.saved { padding: 8px 12px 24px; display: flex; flex-direction: column; gap: 6px; }
+.saved { padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
 .saved-head { display: flex; align-items: baseline; justify-content: space-between; padding: 12px 8px 4px; }
 .saved-head h2 { margin: 0; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); }
 .saved-head span { font-size: 13px; color: var(--muted); }
@@ -221,3 +222,19 @@ h1 { margin: 0; font-size: 24px; font-weight: 700; color: var(--navy); letter-sp
   .seg, .filters, .icon-btn, .notice, .editor { display: none !important; }
   .row { border: 1px solid #ccc !important; break-inside: avoid; }
 }
+
+/* Indoor / Outdoor na lista */
+.env-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.env-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.env-indoor { color: #6B3FA0; }
+.env-outdoor { color: #1F7A4D; }
+.tag {
+  align-self: flex-start; margin-top: 2px;
+  padding: 1px 8px; border-radius: 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.tag-indoor { background: #EDE4F7; color: #4E2A7A; }
+.tag-outdoor { background: #DDF1E6; color: #155C39; }
