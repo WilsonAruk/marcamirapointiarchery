@@ -44,8 +44,9 @@ button { cursor: pointer; }
   flex-direction: column;
   gap: 12px;
 }
-.brand { display: flex; align-items: center; justify-content: space-between; }
-.logo { height: 34px; width: auto; }
+.brand { position: relative; display: flex; align-items: center; justify-content: center; min-height: 44px; }
+.brand .icon-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+.logo { height: 38px; width: auto; max-width: calc(100% - 100px); object-fit: contain; }
 .icon-btn {
   width: 44px; height: 44px; margin-right: -10px;
   border: 0; background: transparent; border-radius: 22px;
