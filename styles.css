@@ -238,3 +238,7 @@ h1 { margin: 0; font-size: 24px; font-weight: 700; color: var(--navy); letter-sp
 }
 .tag-indoor { background: #EDE4F7; color: #4E2A7A; }
 .tag-outdoor { background: #DDF1E6; color: #155C39; }
+
+.gh-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gh-title em { font-style: normal; margin-top: 0; }
+.gh-sel { font-size: 12px; color: #5A6A7E; }
