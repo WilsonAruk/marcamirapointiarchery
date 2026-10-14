@@ -244,12 +244,6 @@
       var pm = state.marks[k];
       var ds = Object.keys(pm).map(Number).sort(function (x, y) { return x - y; });
       var parts = k.split('|');
-      var head = document.createElement('div');
-      head.className = 'group-head' + (k === currentKey ? ' current' : '');
-      head.innerHTML = '<strong></strong><span></span>';
-      head.querySelector('strong').textContent = PROFILE_NAMES[parts[0]] + ' · Flecha ' + parts[1];
-      head.querySelector('span').textContent = k === currentKey ? 'Selecionado' : '';
-      listEl.appendChild(head);
       var lastEnv = null;
       var vs = ds.map(function (d) { return pm[d]; });
       var mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs), sp = (mx - mn) || 1;
@@ -257,10 +251,16 @@
         var v = pm[d];
         var env = d <= 25 ? 'Indoor' : 'Outdoor';
         if (env !== lastEnv) {
-          var sub = document.createElement('div');
-          sub.className = 'env-head env-' + env.toLowerCase();
-          sub.textContent = env;
-          listEl.appendChild(sub);
+          // cabeçalho: "COMPOSTO · FLECHA LARGA" + etiqueta Indoor/Outdoor ao lado
+          var head = document.createElement('div');
+          head.className = 'group-head' + (k === currentKey ? ' current' : '');
+          head.innerHTML = '<span class="gh-title"><strong></strong><em></em></span><span class="gh-sel"></span>';
+          head.querySelector('strong').textContent = PROFILE_NAMES[parts[0]] + ' · Flecha ' + parts[1];
+          var t = head.querySelector('em');
+          t.textContent = env;
+          t.className = 'tag tag-' + env.toLowerCase();
+          head.querySelector('.gh-sel').textContent = (k === currentKey && lastEnv === null) ? 'Selecionado' : '';
+          listEl.appendChild(head);
           lastEnv = env;
         }
         var row = document.createElement('button');
@@ -268,13 +268,10 @@
         row.className = 'row';
         row.setAttribute('aria-pressed', String(k === currentKey && d === state.selected));
         row.innerHTML =
-          '<span class="row-dist"><b></b><small></small></span>' +
+          '<span class="row-dist"><b></b></span>' +
           '<span class="rail" aria-hidden="true"><i class="measured"></i></span>' +
           '<span class="row-val measured"></span>';
         row.querySelector('b').textContent = d + ' m';
-        var tag = row.querySelector('small');
-        tag.textContent = env;
-        tag.className = 'tag tag-' + env.toLowerCase();
         row.querySelector('.rail i').style.left = (ds.length > 1 ? 4 + ((v - mn) / sp) * 92 : 50).toFixed(1) + '%';
         row.querySelector('.row-val').textContent = fmt(v);
         row.setAttribute('aria-label', d + ' metros, ' + env + ', ' + PROFILE_NAMES[parts[0]] + ', flecha ' + parts[1] + ', marcação ' + fmt(v) + '. Toque para editar');
