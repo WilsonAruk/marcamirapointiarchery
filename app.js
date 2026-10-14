@@ -13,6 +13,7 @@
     paraAberto: 'Para Aberto', w1: 'Para W1', vi1: 'Para VI 1', vi23: 'Para VI 2/3'
   };
   var PARA = ['paraAberto', 'w1', 'vi1', 'vi23'];
+  var PROFILE_NAMES = { R: 'Recurvo', C: 'Composto', B: 'Barebow', W1: 'Para W1', VI: 'Para VI' };
 
   // Distâncias do round 1440 (WA) por categoria/sexo.
   function distances1440(cls, sex) {
@@ -105,7 +106,7 @@
   // ---------- Estado ----------
   var defaults = {
     bow: 'R', cls: 'adulto', sex: 'M', arrow: 'fina', step: 0.05, selected: null,
-    // chave = perfil do arco + tipo de flecha, ex.: "R|fina", "C|grossa"
+    // chave = perfil do arco + tipo de flecha, ex.: "R|fina", "C|larga"
     marks: {}
   };
   var state = load();
@@ -126,7 +127,16 @@
           delete out.marks[k];
         }
       });
-      if (out.arrow !== 'fina' && out.arrow !== 'grossa') out.arrow = 'fina';
+      if (out.arrow === 'grossa') out.arrow = 'larga';
+      if (out.arrow !== 'fina' && out.arrow !== 'larga') out.arrow = 'fina';
+      // renomeia perfis antigos "grossa" para "larga"
+      Object.keys(out.marks).forEach(function (k) {
+        if (/\|grossa$/.test(k)) {
+          var nk = k.replace(/\|grossa$/, '|larga');
+          if (!out.marks[nk]) out.marks[nk] = out.marks[k];
+          delete out.marks[k];
+        }
+      });
       return out;
     } catch (e) {
       return clone(defaults);
@@ -216,39 +226,58 @@
       pick.appendChild(wrap);
     });
 
-    // lista: somente as marcações salvas
+    // lista: todas as marcações salvas (todos os arcos e flechas), perfil atual primeiro
     listEl.innerHTML = '';
-    $('saved-count').textContent = saved.length === 1 ? '1 distância' : saved.length + ' distâncias';
-    if (saved.length === 0) {
+    var currentKey = info.profileKey + '|' + state.arrow;
+    var keys = Object.keys(state.marks).filter(function (k) { return Object.keys(state.marks[k]).length > 0; });
+    keys.sort(function (x, y) { return (x === currentKey ? -1 : y === currentKey ? 1 : x < y ? -1 : 1); });
+    var totalSaved = 0;
+    keys.forEach(function (k) { totalSaved += Object.keys(state.marks[k]).length; });
+    $('saved-count').textContent = totalSaved === 1 ? '1 marcação' : totalSaved + ' marcações';
+    if (totalSaved === 0) {
       var empty = document.createElement('p');
       empty.className = 'empty';
-      empty.textContent = 'Nenhuma marcação salva para este arco e flecha. Escolha a distância acima, ajuste o valor e toque em "Salvar marcação".';
+      empty.textContent = 'Nenhuma marcação salva ainda. Escolha a distância acima, ajuste o valor e toque em "Salvar marcação".';
       listEl.appendChild(empty);
     }
-    var vals = saved.map(function (d) { return marks[d]; });
-    var min = vals.length ? Math.min.apply(null, vals) : 0;
-    var max = vals.length ? Math.max.apply(null, vals) : 1;
-    var span = (max - min) || 1;
-    saved.forEach(function (d) {
-      var v = marks[d];
-      var row = document.createElement('button');
-      row.type = 'button';
-      row.className = 'row';
-      row.setAttribute('aria-pressed', String(d === state.selected));
-      row.innerHTML =
-        '<span class="row-dist"><b></b><small></small></span>' +
-        '<span class="rail" aria-hidden="true"><i class="measured"></i></span>' +
-        '<span class="row-val measured"></span>';
-      row.querySelector('b').textContent = d + ' m';
-      row.querySelector('small').textContent = d <= 25 ? 'Indoor' : 'Outdoor';
-      row.querySelector('.rail i').style.left = (saved.length > 1 ? 4 + ((v - min) / span) * 92 : 50).toFixed(1) + '%';
-      row.querySelector('.row-val').textContent = fmt(v);
-      row.setAttribute('aria-label', d + ' metros, marcação ' + fmt(v) + '. Toque para editar');
-      row.addEventListener('click', function () {
-        state.selected = d; draft = null; persist(); render();
-        $('dist-pick').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    keys.forEach(function (k) {
+      var pm = state.marks[k];
+      var ds = Object.keys(pm).map(Number).sort(function (x, y) { return x - y; });
+      var parts = k.split('|');
+      var head = document.createElement('div');
+      head.className = 'group-head' + (k === currentKey ? ' current' : '');
+      head.innerHTML = '<strong></strong><span></span>';
+      head.querySelector('strong').textContent = PROFILE_NAMES[parts[0]] + ' · Flecha ' + parts[1];
+      head.querySelector('span').textContent = k === currentKey ? 'Selecionado' : '';
+      listEl.appendChild(head);
+      var vs = ds.map(function (d) { return pm[d]; });
+      var mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs), sp = (mx - mn) || 1;
+      ds.forEach(function (d) {
+        var v = pm[d];
+        var row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'row';
+        row.setAttribute('aria-pressed', String(k === currentKey && d === state.selected));
+        row.innerHTML =
+          '<span class="row-dist"><b></b><small></small></span>' +
+          '<span class="rail" aria-hidden="true"><i class="measured"></i></span>' +
+          '<span class="row-val measured"></span>';
+        row.querySelector('b').textContent = d + ' m';
+        row.querySelector('small').textContent = (d <= 25 ? 'Indoor' : 'Outdoor') + ' · flecha ' + parts[1];
+        row.querySelector('.rail i').style.left = (ds.length > 1 ? 4 + ((v - mn) / sp) * 92 : 50).toFixed(1) + '%';
+        row.querySelector('.row-val').textContent = fmt(v);
+        row.setAttribute('aria-label', d + ' metros, ' + PROFILE_NAMES[parts[0]] + ', flecha ' + parts[1] + ', marcação ' + fmt(v) + '. Toque para editar');
+        row.addEventListener('click', function () {
+          // muda os filtros para o perfil desta marca
+          if (parts[0] === 'W1') state.cls = 'w1';
+          else if (parts[0] === 'VI') { if (state.cls !== 'vi1' && state.cls !== 'vi23') state.cls = 'vi1'; }
+          else { state.bow = parts[0]; if (PARA.indexOf(state.cls) > 0) state.cls = 'adulto'; }
+          state.arrow = parts[1];
+          state.selected = d; draft = null; persist(); render();
+          $('dist-pick').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+        listEl.appendChild(row);
       });
-      listEl.appendChild(row);
     });
 
     // editor
@@ -271,7 +300,7 @@
 
   function profileName(info) {
     var sex = state.sex === 'F' ? 'Feminino' : 'Masculino';
-    var arrow = state.arrow === 'grossa' ? 'Flecha grossa' : 'Flecha fina';
+    var arrow = state.arrow === 'larga' ? 'Flecha larga' : 'Flecha fina';
     if (info.bowLocked) return CLASS_NAMES[state.cls] + ' · ' + sex + ' · ' + arrow;
     return BOW_NAMES[state.bow] + ' · ' + CLASS_NAMES[state.cls] + ' · ' + sex + ' · ' + arrow;
   }
