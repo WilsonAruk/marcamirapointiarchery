@@ -250,10 +250,19 @@
       head.querySelector('strong').textContent = PROFILE_NAMES[parts[0]] + ' · Flecha ' + parts[1];
       head.querySelector('span').textContent = k === currentKey ? 'Selecionado' : '';
       listEl.appendChild(head);
+      var lastEnv = null;
       var vs = ds.map(function (d) { return pm[d]; });
       var mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs), sp = (mx - mn) || 1;
       ds.forEach(function (d) {
         var v = pm[d];
+        var env = d <= 25 ? 'Indoor' : 'Outdoor';
+        if (env !== lastEnv) {
+          var sub = document.createElement('div');
+          sub.className = 'env-head env-' + env.toLowerCase();
+          sub.textContent = env;
+          listEl.appendChild(sub);
+          lastEnv = env;
+        }
         var row = document.createElement('button');
         row.type = 'button';
         row.className = 'row';
@@ -263,10 +272,12 @@
           '<span class="rail" aria-hidden="true"><i class="measured"></i></span>' +
           '<span class="row-val measured"></span>';
         row.querySelector('b').textContent = d + ' m';
-        row.querySelector('small').textContent = (d <= 25 ? 'Indoor' : 'Outdoor') + ' · flecha ' + parts[1];
+        var tag = row.querySelector('small');
+        tag.textContent = env;
+        tag.className = 'tag tag-' + env.toLowerCase();
         row.querySelector('.rail i').style.left = (ds.length > 1 ? 4 + ((v - mn) / sp) * 92 : 50).toFixed(1) + '%';
         row.querySelector('.row-val').textContent = fmt(v);
-        row.setAttribute('aria-label', d + ' metros, ' + PROFILE_NAMES[parts[0]] + ', flecha ' + parts[1] + ', marcação ' + fmt(v) + '. Toque para editar');
+        row.setAttribute('aria-label', d + ' metros, ' + env + ', ' + PROFILE_NAMES[parts[0]] + ', flecha ' + parts[1] + ', marcação ' + fmt(v) + '. Toque para editar');
         row.addEventListener('click', function () {
           // muda os filtros para o perfil desta marca
           if (parts[0] === 'W1') state.cls = 'w1';
@@ -274,7 +285,7 @@
           else { state.bow = parts[0]; if (PARA.indexOf(state.cls) > 0) state.cls = 'adulto'; }
           state.arrow = parts[1];
           state.selected = d; draft = null; persist(); render();
-          $('dist-pick').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          document.querySelector('.editor').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
         listEl.appendChild(row);
       });
